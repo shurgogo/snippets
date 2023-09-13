@@ -1,11 +1,16 @@
 import re
 
 
-def find_all_numbers(s):
+def find_first_number(s):
+    """
+
+    @param s: string, example '50Mb'
+    """
     numbers = re.findall('\d+', s)
-    if len(numbers) >0:
-        print(numbers[0])
+    if len(numbers) > 0:
+        return numbers[0]
+    return None
 
 
 if __name__ == '__main__':
-    find_all_numbers('50M')
+    find_first_number('50M')
