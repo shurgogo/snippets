@@ -1,0 +1,21 @@
+ume:
+  - address: 127.0.0.1
+    port: 28001
+    username: admin
+    password: 12345
+  - address: 192.168.0.2
+    port: 28001
+    username: admin
+    password: abcdefghijklmn
+
+email:
+  - address: pop.sina.com
+    protocol: pop3
+    mailbox: INBOX
+    username: zte_agent@sina.com
+    password: 34fb895495223169
+  - address: imap.sina.com
+    protocol: imap
+    mailbox: UME
+    username: zte_agent@sina.com
+    password: 34fb895495223169
