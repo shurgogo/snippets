@@ -2,24 +2,7 @@ import imaplib
 import poplib
 import email
 from email.header import decode_header
-from email.parser import Parser
 import logging
-
-
-class UME(object):
-    def __init__(self, user, passwd, ip, port):
-        pass
-
-    def send(self, body):
-        return 'success'
-
-
-class UMEFake(object):
-    def __init__(self):
-        pass
-
-    def send(self):
-        return 'success'
 
 
 class EmailClient(object):
@@ -161,18 +144,10 @@ def _create_email_from_bytes_msg(bytes_msg: bytes):
 
 
 if __name__ == '__main__':
-    pass
-    # imap = IMAPClient('imap.sina.com', 'zte_agent@sina.com', '34fb895495223169', 'UME')
-    # login_success = imap.login()
-    # if not login_success:
-    #     exit(-1)
-    # es = imap.fetch()
-    # imap.close()
-    # print(es)
-    # pop3 = POP3Client('pop.sina.com', 'zte_agent@sina.com', '34fb895495223169')
-    # login_success = pop3.login()
-    # if not login_success:
-    #     exit(-1)
-    # es = pop3.fetch()
-    # pop3.close()
-    # print(es)
+    pop3 = POP3Client('pop.sina.com', 'wow_agent@sina.com', '34fb895495223169')
+    login_success = pop3.login()
+    if not login_success:
+        exit(-1)
+    es = pop3.fetch()
+    pop3.close()
+    print(es)

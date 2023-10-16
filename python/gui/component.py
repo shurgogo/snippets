@@ -1,6 +1,10 @@
+import tkinter as tk
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from ttkbootstrap.dialogs import Dialog
+from ttkbootstrap.dialogs import Messagebox
+
+import util
 
 
 class FormDataEntry(Dialog):
@@ -9,14 +13,16 @@ class FormDataEntry(Dialog):
                  title='Form Data Entry',
                  padding=(20, 20),
                  parent=None,
-                 fns=None,
+                 data=None,
+                 mode='add',
                  ):
         super().__init__(parent, title)
-        self._valid_fns = [] if fns is None else fns
+        self._mode = mode
         if labels is not None:
             self._labels = labels
         else:
             raise Exception('labels should not be empty')
+        self._data = data
         self._padding = padding
         self._entries: list[ttk.Entry] = []
 
@@ -36,7 +42,11 @@ class FormDataEntry(Dialog):
         data_lbl = ttk.Label(master=entry_row, text=label.strip().title(), width=10)
         data_lbl.pack(side=LEFT, padx=5)
 
-        data_entry = ttk.Entry(master=entry_row)
+        if self._mode == 'add':
+            data_entry = ttk.Entry(master=entry_row)
+        else:  # self._mode == 'edit':
+            default_value = tk.StringVar(value=self._data[label])
+            data_entry = tk.Entry(master=entry_row, textvariable=default_value)
         data_entry.pack(side=LEFT, padx=5, fill=X, expand=YES)
 
         self._entries.append(data_entry)
@@ -69,21 +79,11 @@ class FormDataEntry(Dialog):
         self._result = {}
         for i, e in enumerate(self._entries):
             self._result[self._labels[i]] = e.get()
-        valid_result = self.validate()
-        if not valid_result:
-            self._result = None
-            return
         self._toplevel.destroy()
 
     def _on_cancel(self, *_):
         self._toplevel.destroy()
         self._result = None
-
-    def validate(self):
-        for func in self._valid_fns:
-            if not func(self._result):
-                return False
-        return True
 
 
 class ConfigRow(ttk.Frame):
@@ -138,6 +138,16 @@ class ConfigRow(ttk.Frame):
         )
         add_btn.pack(side=LEFT, padx=5)
 
+        # add button
+        edit_btn = ttk.Button(
+            master=self,
+            text='Edit',
+            command=self._on_edit(cbx=cbx, title=f'{self._name} Edition'),
+            width=6,
+            bootstyle='primary-outline',
+        )
+        edit_btn.pack(side=LEFT, padx=5)
+
         # delete button
         del_btn = ttk.Button(
             master=self,
@@ -150,8 +160,18 @@ class ConfigRow(ttk.Frame):
 
     def _on_add(self, cbx: ttk.Combobox, title):
         def inner():
-            entry = FormDataEntry(labels=list(self._get_cur().keys()), title=title, parent=self)
-            entry.show()
+            labels = list(self._get_cur().keys())
+            labels.sort(key=lambda label: util.LABEL_SORT[label])
+            entry = FormDataEntry(
+                labels=labels,
+                title=title,
+                parent=self,
+                mode='add'
+            )
+            entry.show(position=(
+                int(self.master.winfo_screenwidth() / 2) - 140,
+                int(self.master.winfo_screenheight() / 2) - 140
+            ))
             new_data = {}
             # cancel add
             if entry.result is None:
@@ -169,18 +189,67 @@ class ConfigRow(ttk.Frame):
 
     def _on_delete(self, cbx: ttk.Combobox, title):
         def inner():
-            # entry = FormDataEntry(labels=list(self._get_cur().keys()), title=title, parent=self)
-            # entry.show()
             if len(self._all) > 1:
+                ok_cancel = Messagebox.okcancel(
+                    message='Do you really want to delete %s' % self._get_cur()[self._primary_key],
+                    title='Confirm Deletion',
+                    alert=True,
+                    position=(
+                        int(self.master.winfo_screenwidth() / 2) - 140,
+                        int(self.master.winfo_screenheight() / 2) - 100
+                    )
+                )
+                if ok_cancel != 'OK':
+                    return
                 self._all.pop(self._get_cur()[self._primary_key])
                 values = [value for value in self._all.keys()]
                 self._set_cur(self._all[values[0]])
                 cbx['values'] = values
                 cbx.set(values[0])
             elif len(self._all) == 1:
-                self._all.pop(self._get_cur()[self._primary_key])
-                self._set_cur(None)
-                cbx['values'] = ''
-                cbx.set('')
+                Messagebox.show_error(
+                    title=title,
+                    message='The last one can not be deleted',
+                    position=(
+                        int(self.master.winfo_screenwidth() / 2) - 140,
+                        int(self.master.winfo_screenheight() / 2) - 100
+                    )
+                )
+                return
+                # self._all.pop(self._get_cur()[self._primary_key])
+                # self._set_cur(None)
+                # cbx['values'] = ''
+                # cbx.set('')
+
+        return inner
+
+    def _on_edit(self, cbx: ttk.Combobox, title):
+        def inner():
+            labels = list(self._get_cur().keys())
+            labels.sort(key=lambda label: util.LABEL_SORT[label])
+            entry = FormDataEntry(
+                data=self._get_cur(),
+                labels=labels,
+                title=title,
+                parent=self,
+                mode='edit'
+            )
+            entry.show(position=(
+                int(self.master.winfo_screenwidth() / 2) - 100,
+                int(self.master.winfo_screenheight() / 2) - 140
+            ),)
+            new_data = {}
+            # cancel add
+            if entry.result is None:
+                return
+
+            for k, v in entry.result.items():
+                new_data[k] = v
+            self._all.pop(self._get_cur()[self._primary_key])
+            self._all[new_data[self._primary_key]] = new_data
+            self._set_cur(new_data)
+            values = [value for value in self._all.keys()]
+            cbx['values'] = values
+            cbx.set(self._get_cur()[self._primary_key])
 
         return inner
