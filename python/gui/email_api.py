@@ -131,9 +131,10 @@ def _create_email_from_bytes_msg(bytes_msg: bytes):
     # get content
     content = ''
     if msg.is_multipart():
-        for part in msg.walk():
-            if part.get_content_type() == 'text/plain':
-                content = part.get_payload(decode=True).decode(encoding)
+        content = msg.get_payload(decode=True)
+        charset = guess_charset(msg)
+        if charset:
+            content = content.decode(charset)
 
     return {
         'Title': title,
@@ -143,11 +144,28 @@ def _create_email_from_bytes_msg(bytes_msg: bytes):
     }
 
 
+def guess_charset(msg):  # 获取邮件编码
+    charset = msg.get_charset()
+    if charset is None:
+        content_type = msg.get('Content-Type', '').lower()
+        pos = content_type.find('charset=')
+        if pos >= 0:
+            charset = content_type[pos + 8:].strip()
+    return charset
+
+
 if __name__ == '__main__':
-    pop3 = POP3Client('pop.sina.com', 'wow_agent@sina.com', '34fb895495223169')
+    pop3 = POP3Client('pop.sina.com', 'myemail@sina.com', 'passwd')
     login_success = pop3.login()
     if not login_success:
         exit(-1)
     es = pop3.fetch()
     pop3.close()
     print(es)
+    # imap = IMAPClient('imap.sina.com', 'myemail@sina.com', 'passwd', 'INBOX')
+    # login_success = imap.login()
+    # if not login_success:
+    #     exit(-1)
+    # es = imap.fetch()
+    # imap.close()
+    # print(es)
