@@ -45,7 +45,6 @@ func parseAndCheck(s string) (Expr, error) {
 		return nil, fmt.Errorf("empty expression")
 	}
 	expr, err := Parse(s)
-	fmt.Println(expr)
 	if err != nil {
 		return nil, err
 	}
